@@ -74,7 +74,7 @@ for episode in range(EPISODES):
         elif new_state[0] >= env.goal_position:
             q_table[discrete_state + (action,)] = 0
     
-        discrete_state = new_state
+        discrete_state = new_discrete_state
 
     # Decaying is being done in every episode if episode number is with decaying range
     if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
