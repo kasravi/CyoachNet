@@ -1,4 +1,4 @@
-import gym
+import gym #TODO: will be removed going forward
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,7 +11,7 @@ DISCOUNT = 0.95 #Something like a weight, measure of feauter reward vs current r
 SHOW_EVERY = 2000
 EPISODES = 25000
 
-
+#Setting the size of ENVIRONMENT
 DISCRETE_OS_SIZE = [20] * len(env.observation_space.high)
 discrete_os_win_size = (env.observation_space.high - env.observation_space.low) / DISCRETE_OS_SIZE
 
