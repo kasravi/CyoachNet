@@ -2,14 +2,12 @@ import numpy as np
 from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
-import pickle
+import pickle # to save/load q-table
 from matplotlib import style
 import time
 
-from numpy.lib.function_base import select
 
-
-style.use("ggplot")
+style.use("ggplot") #setting our style
 
 SIZE = 10
 EPISODES = 25000
@@ -20,29 +18,40 @@ epsilon = 0.9
 EPS_DECAY = 0.9998
 SHOW_EVERY = 3000
 
-start_q_table = None #or filename
+start_q_table = None #or filename if we have pre-saved Q-Table
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
 
-PLAYER_N = 1
-FOOD_N = 2
-ENEMY_N = 3
+PLAYER_N = 1 # player's key in dictionary
+FOOD_N = 2 # food's key in dictionary
+ENEMY_N = 3 # enemy's key in dictionary
 
-d = {1: (255, 175, 0), 2: (0, 255, 0), 3: (0, 0, 255)} 
-
+d = {1: (255, 175, 0), 2: (0, 255, 0), 3: (0, 0, 255)} # assigning colors to each component of environment
+                                                       # player: blue
+                                                       # food: green
+                                                       # enemy: red
+# class to create the environment
 class Blob:
     def __init__(self):
+        #initializing the blobs randomly
         self.x = np.random.randint(0, SIZE)
         self.y = np.random.randint(0, SIZE)
     
     def __str__(self):
         return f"{self.x}, {self.y}"
     
-    def __sub__(self, other):
-        return (self.x - other.x, self.y - other.y)
+    ### Creating an observation from our environemnt
+    def __sub__(self, other): 
+        '''
+            Passing delta of x and y for the food and enemy to our agent
+        '''
+        return (self.x - other.x, self.y - other.y) 
 
     def action(self, choice):
+        '''
+            Creating 4 movements option (0, 1, 2, 3) --- we are going to move diagonally!
+        '''
         if choice == 0:
             self.move(x=1, y=1)
         elif choice == 1:
@@ -64,7 +73,9 @@ class Blob:
 
         else:
             self.y += y
-
+        '''
+            The next set of conditions are taking care of the situations where we are out of bounds of the environment!
+        '''
         if self.x < 0:
             self.x = 0
         
@@ -86,8 +97,8 @@ if start_q_table is None:
                 for y2 in range(-SIZE+1, SIZE):
                     q_table[((x1, y1), (x2, y2))] = [np.random.uniform(-5, 0) for i in range(4)]
 
-else:
-    with open(start_q_table, "rb") as f:
+else: # In case we have a saved Q-Table to use
+    with open(start_q_table, "rb") as f: 
         q_table = pickle.load(f)
 
 episode_rewards = []
@@ -97,6 +108,9 @@ for episode in range(EPISODES):
     enemy = Blob()
 
     if episode % SHOW_EVERY == 0:
+        '''
+            To visualize only every 3000 episodes
+        '''
         print(f"on # {episode}, epsolon: {epsilon}")
         print(f"{SHOW_EVERY} ep mean {np.mean(episode_rewards[-SHOW_EVERY:])}")
         show = True
@@ -112,7 +126,13 @@ for episode in range(EPISODES):
             action = np.random.randint(0, 4)
 
         player.action(action)
+        '''
+            we may decide to move the food and enemy as well
+        '''
+        #food.move()
+        #enemy.move()
 
+        #Updating the reward
         if player.x == enemy.x and player.y == enemy.y:
             reward = -ENEMY_PENALTY
         elif player.x == food.x and player.y == food.y:
@@ -134,10 +154,13 @@ for episode in range(EPISODES):
         q_table[obs][action] = new_q
 
         if show:
-            env = np.zeros((SIZE, SIZE, 3), dtype= np.uint8)
-            env[food.x][food.y] = d[FOOD_N]
-            env[player.x][player.y] = d[PLAYER_N]
-            env[enemy.x][enemy.y] = d[ENEMY_N]
+            '''
+                Visualizing the environment and movements
+            '''
+            env = np.zeros((SIZE, SIZE, 3), dtype= np.uint8) # creates an RBG image of the size of the environment
+            env[food.x][food.y] = d[FOOD_N] # Set the food location tile to green
+            env[player.x][player.y] = d[PLAYER_N] # Set the player location tile to blue
+            env[enemy.x][enemy.y] = d[ENEMY_N] # Set the enemy location tile to redr
 
             img = Image.fromarray(env, 'RGB')
             img = img.resize((300, 300), resample=Image.BOX)
